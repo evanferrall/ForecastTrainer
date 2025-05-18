@@ -1,11 +1,15 @@
 project_name: MyForecastProjectCLI
 data_paths:
-  raw_data_dir: /home/evan/Desktop/DashboardModel/raw_data
+  # Set the raw data directory relative to the project root so the
+  # example configuration works out of the box.
+  raw_data_dir: ./raw_data
   # processed_data_dir: forecast_cli/data/cache # Not strictly needed for AG
   # run_artefacts_dir: runs # This is handled by training.run_artefacts_dir
 
 escape_room_datamodule:
-  csv_path: "/home/evan/Dropbox/Pass Through Files/HQ Booking Data (For EBF).csv"
+  # Path to the bookings CSV used for tests and local experimentation.
+  # This file lives in the repository under ``raw_data/``.
+  csv_path: ./raw_data/bookings.csv
   train_split_ratio: 0.7
   val_split_ratio: 0.15
   # test_split_ratio is implied (0.15)
