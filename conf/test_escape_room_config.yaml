@@ -1,0 +1,51 @@
+project_name: MyForecastProjectCLI
+data_paths:
+  raw_data_dir: /home/evan/Desktop/DashboardModel/raw_data
+  # processed_data_dir: forecast_cli/data/cache # Not strictly needed for AG
+  # run_artefacts_dir: runs # This is handled by training.run_artefacts_dir
+
+escape_room_datamodule:
+  csv_path: "/home/evan/Dropbox/Pass Through Files/HQ Booking Data (For EBF).csv"
+  train_split_ratio: 0.7
+  val_split_ratio: 0.15
+  # test_split_ratio is implied (0.15)
+  status_filter_include: ["normal"]
+
+model_autogluon:
+  target_column: "participants"
+  freq: "H"
+  prediction_length: 24
+  eval_metric: "WAPE"
+  # preset: "chronos_base" # Old preset
+  preset: "best_quality" # Allows AutoGluon to pick the best model, including fine-tuned Chronos
+  time_limit_fit: 1200 # Increased to 20 minutes
+  predictor_path_suffix: "autogluon_predictor"
+  show_leaderboard: true
+  fit_hyperparameters: # Added for Chronos fine-tuning and other model HPs
+    Chronos: # Specific hyperparameters for Chronos model
+      model_path: "amazon/chronos-t5-base" # Reverted to GPU-preferred model
+      # device: "mps" # Removed, trainer_kwargs will handle device
+      fine_tune: true # Enable fine-tuning as per roadmap
+      fine_tune_lr: 0.0002 # Roadmap suggested learning_rate
+      fine_tune_epochs: 10 # Increased from 5, let's try 10 if time allows
+      context_length: 72 # Roadmap: 3 * prediction_length (3 * 24 = 72)
+      # 'freeze_backbone': True # Investigate if this param is available/needed in AG 1.3
+  # hierarchy: # Commented out for AutoGluon 1.3.0
+  #   level_names: ["game_type", "specific_game"] # Example, adjust to your data's item_id structure
+  #   # For this to work, item_id or columns in data must represent these levels.
+  trainer_kwargs: # Added for PyTorch Lightning backend
+    accelerator: "mps"
+    devices: 1
+
+training:
+  experiment_name: escape_room_autogluon_experiment
+  run_artefacts_dir: "runs" # Directory to save all run outputs (logs, models, etc.)
+  # num_workers: -1 # Autogluon handles parallelism internally
+  # learning_rate: 0.001 # Not directly used by AG predictor config, but for specific models if set in fit_hyperparameters
+  # patience_early_stopping: 10 # AG handles this with time_limit and presets
+  random_seed: 42 # For reproducibility
+
+tuning: # AutoGluon handles HPO internally, this section is more for experiment tracking if needed
+  study_name: escape_room_autogluon_tuning_study
+  # n_trials: 50 # Number of Optuna trials if we were using it directly
+  # timeout_tuning: 3600 # Timeout for the entire Optuna study in seconds

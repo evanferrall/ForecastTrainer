@@ -1,0 +1,20 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# 5. Evaluation & monitoring
+
+*   [evaluation/metrics.py](mdc:forecast_cli/modelling/evaluation/metrics.py) – vectorised WAPE, sMAPE, pinball, hierarchical consistency, and coverage of P90-P10.
+*   [evaluation/backtest.py](mdc:forecast_cli/modelling/evaluation/backtest.py) – time-series cross-val (3 folds) then a live hold-out.
+*   artefacts land in `runs/<run-id>/`
+    *   `metrics.jsonl` line-per-fold
+    *   forecast CSVs
+    *   TensorBoard & Rich tracebacks with the JSONFormatter.
+
+## Explainability
+
+*   For TFT / NHITS: built-in feature importance + attention heat-maps (already coded).
+*   For PatchTST: integrated captum time-lag attribution (one plot per target).
+*   Saved as PNG into `runs/.../interpretability/`.
+*   Interpretability logic can be found in [evaluation/interpretability.py](mdc:forecast_cli/modelling/evaluation/interpretability.py).

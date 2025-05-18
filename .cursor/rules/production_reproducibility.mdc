@@ -1,0 +1,14 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# 6. Production & reproducibility
+
+| Concern                 | Mitigation                                                                                                                            |
+|-------------------------|---------------------------------------------------------------------------------------------------------------------------------------|
+| Model drift             | nightly cron loads yesterday's realised bookings ⇒ `[cli.py](mdc:forecast_cli/cli.py) eval --latest-checkpoint`; if WAPE > X launch re-training. |
+| Serialization safety    | save `state_dict`, AND the `dataset_parameters.yaml` + git SHA in `metadata.json`.                                                      |
+| Config clash            | `[utils/config.py](mdc:forecast_cli/utils/config.py)` builds a frozen Pydantic model; every CLI sub-command prints it as YAML before it runs. |
+| Package skew            | `poetry.lock` checked into VCS, CI runs `pytest` with it; GPU image built from that lock.                                             |
+| Personally Identifiable Data | loader hashes `customer_email` using SHA-256, keeps only 8-byte prefix for grouping repeat customers. This is handled in [sales_loader.py](mdc:forecast_cli/data/ingestion/sales_loader.py). |

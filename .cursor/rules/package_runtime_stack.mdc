@@ -1,0 +1,32 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# 0. Package & runtime stack
+
+| Layer                 | Picks         | Why it's safe                                                         |
+|-----------------------|---------------|-----------------------------------------------------------------------|
+| Python                | 3.10 – 3.11   | all libs tested there; 3.12 support for pytorch-forecasting just landed |
+| PyTorch Forecasting   |               |                                                                       |
+| Torch                 | 2.3.0 (LTS)   | last LTS already in wheels; 2.6 preview exists but upstream libs lag  |
+| PyTorch               |               |                                                                       |
+| Lightning             | 2.2.*         | guaranteed to work with Torch 2.3 and P-Forecasting 1.3.*             |
+| pytorch-forecasting   | 1.3.*         | most recent release, supports Py 3.11 & Torch 2.3                     |
+| PyTorch Forecasting   |               |                                                                       |
+| neuralforecast        | 1.7.*         | brings N-BEATSx, NHITS, PatchTST that out-perform TFT on many series   |
+| Optuna                | 3.*           | hyper-param search                                                    |
+| Polars + PyArrow      |               | zero-copy → Pandas or Numpy; great for 25 M rows weather join         |
+| openmeteo-requests    | 1.4.0         | very small footprint, MIT                                             |
+| holidays              | 0.47          | CA & ON calendars                                                     |
+| Hydra + Pydantic-settings (optional) |               | typed configs, environment overrides                                  |
+
+The PyPI constraints go in `pyproject.toml`:
+
+```toml
+torch = ">=2.3.0,<2.4"
+lightning = ">=2.2.0,<2.3"
+pytorch-forecasting = ">=1.3.0,<1.4"
+neuralforecast = {version="^1.7.0", extras=["pytorch"]}
+polars = {version="^0.20.18", extras=["pyarrow"]}
+```

@@ -1,0 +1,110 @@
+# conf/quick_test_config_1min.yaml
+project_name: EscapeRoomQuickTest1Min
+experiment_name: escape_room_gpu_quick_test_1min_run # Changed experiment name
+raw_data_dir: /data/bookings/ # Placeholder, not directly used by current preprocessor
+
+escape_room_datamodule:
+  csv_path: /home/evan/Dropbox/Pass Through Files/HQ Booking Data (For EBF).csv
+  batch_size: 256 # General datamodule batch_size, not for Chronos specifically here
+  num_workers: 8
+  history_cutoff: "2023-01-01"
+  
+  # --- New Raw Column Name Mappings (UPDATE THESE IF YOUR CSV IS DIFFERENT) ---
+  raw_timestamp_column: 'Start'       # Main event start timestamp
+  raw_end_timestamp_column: 'End'         # Main event end timestamp
+  raw_created_col_name: 'created'             # For lead time calculation
+  raw_promo_title_col_name: 'promotion'       # For ft_has_promo
+  raw_coupon_code_col_name: 'coupons'         # For ft_uses_coupon_code
+  raw_flat_rate_col_name: 'flat_rate'         # For ft_flat_rate (source column for this)
+  raw_addl_player_fee_col_name: 'additional_player_fee' # For ft_addl_player_fee (source column)
+  raw_participants_col_name: 'Participants' # Added for number of players
+  # --- End New Raw Column Name Mappings ---
+
+model_autogluon:
+  target: "y" # This is a default, DataPreprocessor determines actual target for each KPI
+  freq: "H"   # This is a default, train.py sets freq per family
+  prediction_length: 24
+  eval_metric: "WAPE" # Default, train.py sets MAE for 'prob' family
+  time_limit_per_family: 60 # 1 minute per family
+
+  fit_hyperparameters:
+    Chronos:
+      model_path: "autogluon/chronos-bolt-base"
+      context_length: 168 
+      # batch_size will be set dynamically in train.py (16 for D, 8 for H)
+      fine_tune: true
+      epochs: 50 # Keep 50 epochs, time_limit will cut it short
+      learning_rate: 3e-5 
+      lr_scheduler_type: "cosine"
+      warmup_ratio: 0.05
+      lora_r: 4 
+      lora_alpha: 8
+      trainer_kwargs:
+        accelerator: "gpu"
+        devices: 1
+        precision: "bf16-mixed"
+        gradient_checkpointing: true 
+show_leaderboard: true 
+
+# --- KPI Configurations (Minimal for peek_data.py testing) ---
+kpi_configs:
+  bookings_daily: # Renamed from bookings
+    autogluon_freq: "D"
+    autogluon_eval_metric: "WAPE"
+    target_transform: "log1p" 
+    context_length_factor: null 
+    autogluon_models:
+      ChronosModel:
+        model_path: 'autogluon/chronos-t5-tiny'
+      TemporalFusionTransformer: {}
+  
+  bookings_hourly: # New KPI
+    autogluon_freq: "H"
+    autogluon_eval_metric: "WAPE"
+    target_transform: "log1p"
+    context_length_factor: 2 # Hourly, so maybe 2x prediction length
+    autogluon_models:
+      ChronosModel:
+        model_path: 'autogluon/chronos-t5-tiny'
+      TemporalFusionTransformer: {}
+
+  participants_daily: # New KPI
+    autogluon_freq: "D"
+    autogluon_eval_metric: "WAPE" # Or MAE if distribution is very skewed or has many zeros
+    target_transform: "log1p"
+    context_length_factor: null
+    autogluon_models:
+      ChronosModel:
+        model_path: 'autogluon/chronos-t5-tiny'
+      TemporalFusionTransformer: {}
+
+  participants_hourly: # New KPI
+    autogluon_freq: "H"
+    autogluon_eval_metric: "WAPE" # Or MAE
+    target_transform: "log1p"
+    context_length_factor: 2
+    autogluon_models:
+      ChronosModel:
+        model_path: 'autogluon/chronos-t5-tiny'
+      TemporalFusionTransformer: {}
+
+  revenue: # Kept as is (implicitly daily)
+    autogluon_freq: "D"
+    autogluon_eval_metric: "WAPE"
+    target_transform: "log1p"
+    context_length_factor: null
+    autogluon_models:
+      ChronosModel:
+        model_path: 'autogluon/chronos-t5-tiny'
+      TemporalFusionTransformer: {}
+      
+  prob: # Kept as is (hourly)
+    autogluon_freq: "H"
+    autogluon_eval_metric: "MAE" 
+    target_transform: "logit" # Explicitly set, Preprocessor will handle this
+    context_length_factor: 2 
+    autogluon_models:
+      ChronosModel:
+        model_path: 'autogluon/chronos-t5-tiny'
+      TemporalFusionTransformer: {}
+# --- End KPI Configurations --- 

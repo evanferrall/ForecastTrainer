@@ -1,0 +1,14 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# 7. Accuracy-boost tricks specific to Escape-room demand
+
+| Idea                    | Implementation hint                                                                                                                             |
+|-------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
+| Capacity saturation     | Add feature `rooms_available - rooms_booked_so_far` (zero-floor). Implemented in [feature_builder.py](mdc:forecast_cli/data/processing/feature_builder.py). |
+| Lead-time effect        | Lagged cumulative bookings at T-7d, -14d as static covariates to daily head. Implemented in [feature_builder.py](mdc:forecast_cli/data/processing/feature_builder.py). |
+| Google Trends / Meta Ads spend | Pull weekly index, forward-fill, feed to both heads. Implemented in [feature_builder.py](mdc:forecast_cli/data/processing/feature_builder.py).                                  |
+| Multi-instance transfer | If you operate several branches, treat `branch_id` as group id in dataset – global model performs better than per-branch. Dataset creation is handled in files like [daily_dataset.py](mdc:forecast_cli/modelling/datasets/daily_dataset.py) and [hourly_dataset.py](mdc:forecast_cli/modelling/datasets/hourly_dataset.py). |
+| Quantile fusion         | After training, fit constrained quantile regression on top of the neural quantiles (ensures monotonicity & sharper PIs). Potentially in [evaluation/metrics.py](mdc:forecast_cli/modelling/evaluation/metrics.py) or model wrapper. |

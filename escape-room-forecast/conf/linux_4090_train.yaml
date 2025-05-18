@@ -1,0 +1,31 @@
+# conf/linux_4090_train.yaml
+project_name: EscapeRoom
+experiment_name: escape_room_gpu
+raw_data_dir: /data/bookings/
+escape_room_datamodule:
+  csv_path: /home/evan/Dropbox/Pass Through Files/HQ Booking Data (For EBF).csv
+  batch_size: 256        # bigger GPU-friendly minibatch
+  num_workers: 8         # >0 fine on Linux
+model_autogluon:
+  target: "y"
+  freq: "H"
+  prediction_length: 24
+  eval_metric: "WAPE"
+  fit_hyperparameters:
+    Chronos:
+      model_path: "amazon/chronos-t5-base"
+      fine_tune: true
+      epochs: 40
+      learning_rate: 3e-5
+      lr_scheduler_type: "cosine"
+      warmup_ratio: 0.05
+      batch_size: 256
+      early_stopping_patience: 5
+      lora_r: 8
+      lora_alpha: 16
+      trainer_kwargs:
+        accelerator: "gpu"
+        devices: 1
+        precision: "bf16-mixed"
+        gradient_accumulation_steps: 4
+show_leaderboard: true 

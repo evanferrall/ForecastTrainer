@@ -1,0 +1,46 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# 1. Repository / module layout
+
+```
+forecast_cli/
+├─ data/
+│  ├─ ingestion/
+│  │   ├─ [sales_loader.py](mdc:forecast_cli/data/ingestion/sales_loader.py)
+│  │   ├─ [weather_client.py](mdc:forecast_cli/data/ingestion/weather_client.py)
+│  │   └─ [events_calendar.py](mdc:forecast_cli/data/ingestion/events_calendar.py)
+│  ├─ processing/
+│  │   ├─ [feature_builder.py](mdc:forecast_cli/data/processing/feature_builder.py)
+│  │   ├─ [scalers.py](mdc:forecast_cli/data/processing/scalers.py)
+│  │   └─ [splitters.py](mdc:forecast_cli/data/processing/splitters.py)
+│  └─ cache/            # parquet + npy artefacts
+├─ modelling/
+│  ├─ datasets/
+│  │   ├─ [daily_dataset.py](mdc:forecast_cli/modelling/datasets/daily_dataset.py)
+│  │   ├─ [hourly_dataset.py](mdc:forecast_cli/modelling/datasets/hourly_dataset.py)
+│  │   └─ [multires_dataset.py](mdc:forecast_cli/modelling/datasets/multires_dataset.py)
+│  ├─ backbones/
+│  │   ├─ [tft.py](mdc:forecast_cli/modelling/backbones/tft.py)
+│  │   ├─ [nhits.py](mdc:forecast_cli/modelling/backbones/nhits.py)
+│  │   ├─ [nbeatsx.py](mdc:forecast_cli/modelling/backbones/nbeatsx.py)
+│  │   └─ [patchtst.py](mdc:forecast_cli/modelling/backbones/patchtst.py)
+│  ├─ wrappers/
+│  │   └─ [multitarget_wrapper.py](mdc:forecast_cli/modelling/wrappers/multitarget_wrapper.py)
+│  ├─ training/
+│  │   ├─ [trainer.py](mdc:forecast_cli/modelling/training/trainer.py)
+│  │   └─ [tuning.py](mdc:forecast_cli/modelling/training/tuning.py)
+│  └─ evaluation/
+│      ├─ [metrics.py](mdc:forecast_cli/modelling/evaluation/metrics.py)
+│      ├─ [backtest.py](mdc:forecast_cli/modelling/evaluation/backtest.py)
+│      └─ [interpretability.py](mdc:forecast_cli/modelling/evaluation/interpretability.py)
+├─ utils/
+│  ├─ [logging.py](mdc:forecast_cli/utils/logging.py)
+│  ├─ [io.py](mdc:forecast_cli/utils/io.py)
+│  └─ [config.py](mdc:forecast_cli/utils/config.py)
+└─ [cli.py](mdc:forecast_cli/cli.py)                # Typer entry-point
+```
+
+Rule of thumb: any file above 400 LOC becomes its own package or sub-module.

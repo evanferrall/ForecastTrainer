@@ -1,0 +1,42 @@
+[tool.poetry]
+name = "dashboardmodel"
+version = "0.1.0"
+description = "Forecasting model for escape room demand"
+authors = ["Your Name <you@example.com>"] # Placeholder, you can change this
+readme = "README.md" # Assuming you might add a README later
+packages = [{include = "forecast_cli", from = "escape-room-forecast/src"}]
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.12"
+torch = ">=2.3.0,<2.4"
+lightning = ">=2.2.0,<2.3" # Corresponds to pytorch-lightning
+# pytorch-forecasting = ">=1.3.0,<1.4" # Keep if still needed, or remove if AG replaces its functionality
+neuralforecast = "1.7.5" # Keep if still needed for comparison or specific models outside AG
+polars = {version = "^0.20.18", extras = ["pyarrow"]}
+openmeteo-requests = "^1.4.0"
+holidays = "^0.47"
+hydra-core = "^1.3.2"
+pydantic-settings = "^2.2.1"
+optuna = "^3.0.0"
+autogluon = "^1.3.0" # Use the umbrella package, targetting 1.3.0 as latest stable
+hierarchicalforecast = "^1.2.1" # Corrected to latest available version
+
+# Add pandas if other scripts explicitly need it later for data manipulation beyond Polars.
+# It's often a transitive dependency of AutoGluon anyway.
+pandas = "^2.0.0" # Adding pandas explicitly as it was missing in the last run.
+einops = "^0.8.1"
+rich = ">=10.2.2"
+requests-cache = "^1.2.1"
+workalendar = "^17.0.0"
+retry-requests = "^2.0.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.0" # For running tests
+pytest-cov = "^4.0" # For test coverage
+ipykernel = "^6.29.3"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api" 
+
+# Potential section for tool.autogluon if specific settings are needed, but usually not required here. 

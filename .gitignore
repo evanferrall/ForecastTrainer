@@ -1,0 +1,53 @@
+# Python bytecode and cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Poetry virtualenv
+.venv/
+venv/
+env/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+*.egg
+
+# IDE specific files
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+
+# AutoGluon and training run artifacts
+runs/
+AutogluonModels/
+models/
+checkpoints/
+*.pt
+*.pth
+*.h5
+*.pkl
+*.joblib
+*.onnx
+
+# Large data files (consider adding specific large files or subdirectories if needed)
+# raw_data/ # Uncomment if raw_data contains very large files you don't want in git
+# data/ # Uncomment if you have a data directory with large files
+# *.csv # Be cautious, uncomment only if you have large CSVs that shouldn't be tracked
+
+# Temporary files
+*.tmp
+*.bak
+*~
+
+# SQLite cache file
+.cache.sqlite 

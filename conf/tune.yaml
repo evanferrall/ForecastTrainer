@@ -1,0 +1,47 @@
+# Optuna Hyperparameter Tuning Configuration
+# Roadmap Section 4: Training loop
+
+# General parameters for the MultiresMultiTarget wrapper
+learning_rate:
+  type: float # Optuna type: float
+  log: True
+  low: 3.0e-4
+  high: 3.0e-2
+
+lambda_hier:
+  type: float # Optuna type: float
+  low: 0.0
+  high: 5.0
+
+# Parameters for specific backbones (examples)
+# The actual tuning script would need logic to select which backbone's params to use.
+
+# NHITS Backbone Parameters (if daily_backbone or hourly_backbone is NHITS)
+nhits_params:
+  n_stacks:
+    type: categorical # Optuna type: categorical
+    choices: [2, 3, 4]
+  n_layers:
+    type: categorical # Optuna type: categorical
+    choices: [1, 2, 3]
+  # Add other relevant NHITS parameters to tune, e.g.:
+  # n_blocks: {type: categorical, choices: [[1,1,1], [2,2,2]]}
+  # mlp_units: {type: categorical, choices: [[[512, 512]], [[256,256,256]]]}
+  # learning_rates (if backbone has its own LR, though usually global LR is preferred for tuning)
+
+# PatchTST Backbone Parameters (if daily_backbone or hourly_backbone is PatchTST)
+patchtst_params:
+  d_model:
+    type: categorical # Optuna type: categorical
+    choices: [64, 128, 256]
+  # Add other relevant PatchTST parameters to tune, e.g.:
+  # n_heads: {type: categorical, choices: [4, 8, 16]}
+  # e_layers: {type: categorical, choices: [2, 3, 4]}
+  # patch_len: {type: categorical, choices: [16, 32]}
+  # stride: {type: categorical, choices: [8, 16]}
+
+# General trial configuration (can be overridden by CLI or tuning script defaults)
+# trainer_epochs_for_trial: 10
+# patience_early_stopping_trial: 3
+# accumulate_grad_batches_trial: 1
+# batch_size: # (e.g., categorical [32, 64, 128]) - if tuning batch size 

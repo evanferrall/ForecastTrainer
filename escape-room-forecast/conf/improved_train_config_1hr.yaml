@@ -1,0 +1,46 @@
+# conf/improved_train_config_1hr.yaml
+project_name: EscapeRoomImproved1Hr
+experiment_name: escape_room_gpu_improved_1hr_run
+raw_data_dir: /data/bookings/ # Placeholder, not directly used by current preprocessor
+
+escape_room_datamodule:
+  csv_path: /home/evan/Dropbox/Pass Through Files/HQ Booking Data (For EBF).csv
+  batch_size: 256 # General datamodule batch_size, not for Chronos specifically here
+  num_workers: 8
+  history_cutoff: "2023-01-01"
+  
+  # --- New Raw Column Name Mappings (UPDATE THESE IF YOUR CSV IS DIFFERENT) ---
+  raw_timestamp_column: 'Start'       # Main event start timestamp
+  raw_end_timestamp_column: 'End'         # Main event end timestamp
+  raw_created_col_name: 'created'             # For lead time calculation
+  raw_promo_title_col_name: 'promotion'       # For ft_has_promo
+  raw_coupon_code_col_name: 'coupons'         # For ft_uses_coupon_code
+  raw_flat_rate_col_name: 'flat_rate'         # For ft_flat_rate (source column for this)
+  raw_addl_player_fee_col_name: 'additional_player_fee' # For ft_addl_player_fee (source column)
+  # --- End New Raw Column Name Mappings ---
+
+model_autogluon:
+  target: "y" # This is a default, DataPreprocessor determines actual target for each KPI
+  freq: "H"   # This is a default, train.py sets freq per family
+  prediction_length: 24
+  eval_metric: "WAPE" # Default, train.py sets MAE for 'prob' family
+  time_limit_per_family: 3600 # 1 hour per family
+
+  fit_hyperparameters:
+    Chronos:
+      model_path: "autogluon/chronos-bolt-base"
+      context_length: 168 # Playbook suggests 28-35 for daily, 168 for hourly. Keep 168 for now, HPO can tune this.
+      # batch_size: 8 # This will be set dynamically in train.py (16 for D, 8 for H)
+      fine_tune: true
+      epochs: 50 # Increased from 10, as per playbook
+      learning_rate: 3e-5 # Playbook suggests 1e-4, but let's start with current and tune if needed
+      lr_scheduler_type: "cosine"
+      warmup_ratio: 0.05
+      lora_r: 4 # Playbook suggests 8 or 16. Keep 4 for now, can be tuned.
+      lora_alpha: 8
+      trainer_kwargs:
+        accelerator: "gpu"
+        devices: 1
+        precision: "bf16-mixed"
+        gradient_checkpointing: true # Playbook suggests False unless needed. Keeping True for now due to potentially larger context/epochs.
+show_leaderboard: true 

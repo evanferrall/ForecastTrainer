@@ -1,0 +1,21 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# 9. Next actions for your team
+
+1.  `git init` a new repo, paste the folder skeleton.
+2.  Implement [sales_loader.py](mdc:forecast_cli/data/ingestion/sales_loader.py) (fastest to spec because you control schema).
+3.  Copy the snippets, run `poetry install & pytest -q`.
+4.  Use `python [cli.py](mdc:forecast_cli/cli.py) fit` – it will cache Polars datasets to Parquet; first run < 15 min on an M1.
+5.  Optional: `python [cli.py](mdc:forecast_cli/cli.py) tune --n-trials 50` to squeeze extra 3-5 % WAPE.
+
+That should give you a lean, fully-specified codebase that:
+
+*   re-implements every feature in the long file you sent,
+*   stays compatible across libraries today,
+*   is easily extensible for more stores or extra outputs, and
+*   is built for robustness & accuracy in your escape-room forecasting scenario.
+
+Happy hacking — and may your next room be "Booked Solid"!

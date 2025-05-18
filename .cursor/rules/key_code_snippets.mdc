@@ -1,0 +1,60 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# 8. Two key code snippets to start from
+
+## 8.1 Building the multi-resolution dataset
+
+Relevant files: [daily_dataset.py](mdc:forecast_cli/modelling/datasets/daily_dataset.py), [hourly_dataset.py](mdc:forecast_cli/modelling/datasets/hourly_dataset.py), [multires_dataset.py](mdc:forecast_cli/modelling/datasets/multires_dataset.py)
+
+```python
+from pytorch_forecasting import TimeSeriesDataSet
+
+daily_ds = TimeSeriesDataSet(
+    daily_df,
+    time_idx="day_idx",
+    target=["booking_revenue_cents", "players", "booking_count"],
+    group_ids=["branch_id"],
+    max_encoder_length=60,
+    max_prediction_length=90,
+    static_categoricals=["branch_id"],
+    time_varying_known_reals=["dow","holiday_flag", ...],
+    time_varying_unknown_reals=["booking_revenue_cents", ...],
+)
+
+hourly_ds = TimeSeriesDataSet(
+    hourly_df.merge(daily_df[["day_idx","daily_pred_stub"]], on="day_idx", how="left"),
+    time_idx="hour_idx",
+    target=["booking_revenue_cents", "players", "booking_count"],
+    group_ids=["branch_id","day_idx"],      # finer hierarchy
+    max_encoder_length=24*14,
+    max_prediction_length=24*3,
+    static_categoricals=["branch_id"],
+    time_varying_known_reals=["hour_in_day","holiday_flag", "daily_pred_stub", ...],
+    time_varying_unknown_reals=["booking_revenue_cents", ...],
+)
+```
+
+## 8.2 Wrapper forward pass (simplified)
+
+Relevant file: [multitarget_wrapper.py](mdc:forecast_cli/modelling/wrappers/multitarget_wrapper.py)
+
+```python
+class MultiresMultiTarget(pl.LightningModule):
+    def __init__(self, daily_backbone, hourly_backbone, loss, lambda_hier=1.0):
+        ...
+    def forward(self, batch_daily, batch_hourly):
+        yhat_d = self.daily_backbone(batch_daily)
+        batch_hourly["daily_pred_stub"] = repeat(yhat_d["prediction"].detach(), 'B Q -> B T Q', T=72)
+        yhat_h = self.hourly_backbone(batch_hourly)
+
+        loss_d = self.loss(yhat_d["prediction"], batch_daily["y"])
+        loss_h = self.loss(yhat_h["prediction"], batch_hourly["y"])
+        hier = torch.nn.functional.l1_loss(
+                    yhat_h["prediction"].sum(dim=1),  # sum 72 h
+                    yhat_d["prediction"]
+               )
+        return loss_d + loss_h + self.lambda_hier * hier
+```
