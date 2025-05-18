@@ -33,9 +33,10 @@ model_autogluon:
   # hierarchy: # Commented out for AutoGluon 1.3.0
   #   level_names: ["game_type", "specific_game"] # Example, adjust to your data's item_id structure
   #   # For this to work, item_id or columns in data must represent these levels.
-  trainer_kwargs: # Added for PyTorch Lightning backend
-    accelerator: "mps"
+  trainer_kwargs: # Use GPU when available
+    accelerator: "gpu"
     devices: 1
+    precision: "16-mixed"
 
 training:
   experiment_name: escape_room_autogluon_experiment

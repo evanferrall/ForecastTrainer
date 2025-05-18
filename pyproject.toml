@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Forecasting model for escape room demand"
 authors = ["Your Name <you@example.com>"] # Placeholder, you can change this
 readme = "README.md" # Assuming you might add a README later
-packages = [{include = "forecast_cli", from = "escape-room-forecast/src"}]
+packages = [{include = "forecast_cli", from = "src"}]
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.12"

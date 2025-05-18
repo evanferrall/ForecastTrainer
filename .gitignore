@@ -49,5 +49,9 @@ checkpoints/
 *.bak
 *~
 
+# Local AI editor artifacts
+.cursor/
+.specstory/
+
 # SQLite cache file
 .cache.sqlite 
