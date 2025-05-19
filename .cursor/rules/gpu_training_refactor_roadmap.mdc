@@ -3,3 +3,97 @@ description:
 globs:
 alwaysApply: false
 ---
+# GPU Training Stack Refactor Roadmap
+
+This document outlines the steps to refactor the project from a Mac-centric setup to a GPU-first training stack on a Linux workstation, based on the provided lift-and-shift guide.
+
+## 1. Project Setup & Dependencies
+
+*   **Initialize Project Directory**: All new components will reside within the `escape-room-forecast/` directory.
+*   **Python Dependencies**: Configure [escape-room-forecast/pyproject.toml](mdc:escape-room-forecast/pyproject.toml) for Poetry. This includes:
+    *   Python 3.11
+    *   PyTorch 2.3.1+cu121
+    *   AutoGluon-Timeseries 1.3 (GPU build)
+    *   `coremltools` for model conversion.
+    *   Other dependencies like `polars` and `pandas`.
+*   **Directory Structure**:
+    *   `escape-room-forecast/conf/`: For configuration files.
+    *   `escape-room-forecast/forecast_cli/`: Common Python package.
+        *   `datamodules/`
+        *   `training/` (will contain the main training script, e.g., `train.py`)
+        *   `utils/` (will contain helper scripts, e.g., `convert.py` for model conversion)
+    *   `escape-room-forecast/docker/`: For Docker-related files.
+    *   `escape-room-forecast/Makefile` (Optional, as per guide)
+
+## 2. Linux Workstation Environment Bootstrap
+
+*   **System Packages**: Install `build-essential`, `git`, `curl`.
+*   **CUDA Toolkit**: Install CUDA 12.1 toolkit and compatible NVIDIA drivers (e.g., 550.xx).
+*   **Poetry & Python**:
+    *   Install Poetry.
+    *   Configure Poetry to use Python 3.11.
+*   **Install Dependencies**: Run `poetry install` (potentially with `--with gpu` if using optional groups in `pyproject.toml`).
+
+## 3. Training Configuration
+
+*   Create the training configuration file: [escape-room-forecast/conf/linux_4090_train.yaml](mdc:escape-room-forecast/conf/linux_4090_train.yaml).
+*   This file will define:
+    *   Project and experiment names.
+    *   Data paths (e.g., `/data/bookings/`).
+    *   `escape_room_datamodule` settings (CSV path, batch size, num_workers).
+    *   `model_autogluon` settings (target, frequency, prediction length, evaluation metric, preset, time limits, hyperparameters for Chronos fine-tuning on GPU).
+
+## 4. Training Pipeline
+
+*   **Develop Training Script**: Implement the main training logic in `escape-room-forecast/forecast_cli/training/train.py` (or similar).
+*   **Run Training**: Execute the training script using:
+    ```bash
+    poetry run python -m forecast_cli.training.train --config conf/linux_4090_train.yaml
+    ```
+*   **Outputs**: Expect trained models (e.g., `chronos_escape_room_best.pt`) and logs in a `runs/` subdirectory.
+
+## 5. Model Conversion to ONNX & Core ML
+
+*   **Develop Conversion Utility**: Implement conversion logic in `escape-room-forecast/forecast_cli/utils/convert.py` (or similar) to handle `.pt` to `.onnx`.
+*   **Perform Conversion**: Use a Python script to:
+    1.  Load the PyTorch model (`.pt`).
+    2.  Convert to ONNX format (`.onnx`).
+    3.  Convert the ONNX model to Core ML format (`.mlmodel`) using `coremltools`, targeting iOS17/macOS14 and `ComputeUnit.ALL`.
+    4.  Save the `escape_room.mlmodel`.
+*   The `coremltools` package should be part of [escape-room-forecast/pyproject.toml](mdc:escape-room-forecast/pyproject.toml).
+
+## 6. Sync Artifacts to Mac
+
+*   Use `rsync` or a similar tool to transfer the generated `escape_room.mlmodel` from the Linux workstation to the Mac development environment.
+
+## 7. Mac Side Integration
+
+*   Replace the old `.mlmodel` in the Xcode project with the newly trained and converted one.
+*   No code changes should be required on the Mac side for inference if the model interface remains the same.
+
+## 8. (Bonus) Docker for Reproducibility
+
+*   Create [escape-room-forecast/docker/4090.Dockerfile](mdc:escape-room-forecast/docker/4090.Dockerfile).
+*   The Dockerfile should:
+    *   Start from an `nvidia/cuda:12.1.1-runtime-ubuntu22.04` base image.
+    *   Install system dependencies (git, python3.11, build-essential).
+    *   Install Poetry.
+    *   Copy `pyproject.toml` and `poetry.lock`.
+    *   Run `poetry install --with gpu`.
+    *   Copy the rest of the project code.
+    *   Set the `ENTRYPOINT` to run the training script.
+*   **Build & Run**:
+    ```bash
+    docker build -f docker/4090.Dockerfile -t escape-train:gpu .
+    docker run --gpus all -v $(pwd)/data:/data escape-train:gpu
+    ```
+
+## Key Files to Create/Manage:
+
+*   [escape-room-forecast/pyproject.toml](mdc:escape-room-forecast/pyproject.toml)
+*   [escape-room-forecast/conf/linux_4090_train.yaml](mdc:escape-room-forecast/conf/linux_4090_train.yaml)
+*   `escape-room-forecast/conf/mac_inference.yaml` (For Mac-side, if different from Linux training)
+*   `escape-room-forecast/Makefile` (Optional)
+*   `escape-room-forecast/forecast_cli/training/train.py` (To be created)
+*   `escape-room-forecast/forecast_cli/utils/convert.py` (To be created)
+*   [escape-room-forecast/docker/4090.Dockerfile](mdc:escape-room-forecast/docker/4090.Dockerfile)
